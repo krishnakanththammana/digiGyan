@@ -1,0 +1,158 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-styles/typography.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="questions-view">
+  <template>
+    <style include="shared-styles">
+       :host {
+        display: block;
+      }
+
+      .questions-container {
+        min-height: 550px;
+        height: 100%;
+        width: 100%;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .search-content {
+        height: 10%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .questions-list {
+        height: 90%;
+        width: 100%;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      paper-card {
+        margin: 8px;
+        padding: 10px;
+        width: 95%;
+      }
+
+      paper-input {
+        width: 50%;
+        min-width: 300px;
+        max-width: 400px;
+      }
+
+      iron-icon, div[suffix] {
+        color: hsl(0, 0%, 50%);
+        margin-right: 12px;
+      }
+
+      .question-heading {
+        @apply --paper-font-headline;
+      }
+
+      .question-description {
+        padding: 8px 0;
+      }
+
+      .question-footer {
+        padding: 8px 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+      }
+    </style>
+
+    <div class="questions-container">
+      <div class="search-content">
+        <paper-input label="Search">
+          <iron-icon icon="search" slot="prefix"></iron-icon>
+        </paper-input>
+      </div>
+      <div class="questions-list">
+        <template is="dom-repeat" items="{{questions}}">
+          <paper-card class="question" on-click="openQuestion" index$="[[index]]" >
+            <div class="question-heading">
+              [[item.question]] 
+            </div>
+            <div class="question-description">
+                [[item.questionDescription]]
+            </div>
+            <div class="question-footer">
+              <span>
+                  <iron-icon icon="thumb-up"></iron-icon>
+                  [[item.likes]]
+              </span>
+              <span>
+                  [[item.answersCount]]
+                  <iron-icon icon="communication:chat-bubble"></iron-icon>
+              </span>
+            </div>
+          </paper-card>
+        </template>
+      </div>
+    </div>
+    <iron-ajax 
+      id="requestQuestions" 
+      url="http://localhost:2000/allQuestions" 
+      handle-as="json" 
+      on-response="_getQuestions" 
+      debounce-duration="300">
+    </iron-ajax>
+  </template>
+
+  <script>
+    class QuestionsView extends Polymer.Element {
+      static get is() {
+        return 'questions-view';
+      }
+
+      static get properties() {
+        return {
+          questions: {
+            type: Array,
+            value: []
+          }
+        };
+      }
+
+      requestQuestion() {
+        this.$.requestQuestions.generateRequest();
+      }
+
+      _getQuestions(data) {
+        console.log(data.detail.response);
+        this.questions = data.detail.response;
+      }
+
+      openQuestion(e) {
+        // this.$$('my-app').page = "question";
+        // var pathIndex = e.path.indexOf();
+        console.log(e.path[3].getAttribute("index"))
+        var questionIndex = e.path[3].getAttribute("index");
+        this.dispatchEvent(
+          new CustomEvent('questionSelected', {detail: {selectedQuestion: this.questions[questionIndex]}})
+        );
+      }
+    }
+
+    window.customElements.define(QuestionsView.is, QuestionsView);
+  </script>
+</dom-module>

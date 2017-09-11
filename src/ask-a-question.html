@@ -1,0 +1,196 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="ask-a-question">
+  <template>
+    <style include="shared-styles">
+       :host {
+        display: block;
+      }
+
+      .ask-a-question-container {
+        min-height: 550px;
+        height: 100%;
+        width: 100%;
+        overflow: auto;
+        padding-bottom: 100px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+      }
+
+      .options-container {
+        width: 50%;
+        min-width: 300px;
+        max-width: 400px;
+        padding: 30px 10px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      paper-input, paper-textarea {
+        width: 50%;
+        min-width: 300px;
+        max-width: 400px;
+      }
+
+      iron-icon,
+      div[suffix] {
+        color: hsl(0, 0%, 50%);
+        margin-right: 12px;
+      }
+
+      paper-button {
+        width: 50%;
+        margin-top: 20px;
+        min-width: 300px;
+        max-width: 400px;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        font-weight: normal;
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      paper-button.indigo {
+        background-color: var(--paper-indigo-500);
+        color: white;
+        --paper-button-raised-keyboard-focus: {
+          background-color: var(--paper-pink-a200) !important;
+          color: white !important;
+        }
+        ;
+      }
+
+      paper-button.indigo:hover {
+        background-color: var(--paper-indigo-400);
+      }
+
+      paper-checkbox {
+        font-family: 'Roboto', sans-serif;
+        margin: 5px 0;
+      }
+
+      paper-checkbox.styled {
+        align-self: center;
+        padding: 8px 16px;
+        --paper-checkbox-checked-color: var(--paper-blue-500);
+        --paper-checkbox-checked-ink-color: var(--paper-blue-500);
+      }
+    </style>
+
+    <div class="ask-a-question-container">
+      <paper-input id="questionTitleInput" label="Title" value="{{title}}">
+        <!-- <iron-icon icon="social:person" slot="prefix"></iron-icon> -->
+      </paper-input>
+      <paper-textarea id="questionDescriptionInput" label="Description" value="{{description}}">
+        <!-- <iron-icon icon="lock" slot="prefix"></iron-icon> -->
+      </paper-textarea>
+      <div class="options-container">
+        <paper-checkbox checked="{{htmlTag}}">
+          HTML
+        </paper-checkbox>
+        <paper-checkbox checked="{{cssTag}}">
+          CSS
+        </paper-checkbox>
+        <paper-checkbox checked="{{jsTag}}">
+          JavaScript
+        </paper-checkbox>
+      </div>
+      <!-- <paper-checkbox class="styled">
+          Checkbox
+          <span class="subtitle">
+            With a longer label
+          </span>
+        </paper-checkbox> -->
+      <paper-button raised class="indigo" on-click="submitQuestion">Submit</paper-button>
+    </div>
+    
+    <iron-ajax 
+      id="postQuestion" 
+      url="http://localhost:2000/postQuestion" 
+      handle-as="json" 
+      on-response="_postedQuestion"
+      debounce-duration="300">
+    </iron-ajax>
+
+  </template>
+
+  <script>
+    class AskAQuestion extends Polymer.Element {
+      static get is() {
+        return 'ask-a-question';
+      }
+
+      static get properties() {
+        return {
+          title: {
+            type: String
+          },
+          description: {
+            type: String
+          },
+          htmlTag: {
+            type: Boolean,
+            value: false
+          },
+          cssTag: {
+            type: Boolean,
+            value: false
+          },
+          jsTag: {
+            type: Boolean,
+            value: false
+          }
+        };
+      }
+
+      _postedQuestion(data) {
+        console.log(data.detail.response);
+      }
+
+      submitQuestion() {
+        var tags = [];
+        if(this.htmlTag) {
+          tags.push('html');
+        }
+        if(this.cssTag) {
+          tags.push('css');
+        }
+        if(this.jsTag) {
+          tags.push('js');
+        }
+        if((this.title && this.description) && (this.htmlTag || this.cssTag || this.jstag)) {
+          var question = {
+            question: this.title,
+            questionAuthor: "Krish",
+            questionID: "",
+            likes: "",
+            answersCount: "",
+            questionDescription: this.description,
+            tags: tags
+          }
+          console.log(question);
+          this.$.postQuestion.params.question = JSON.stringify(question);
+          this.$.postQuestion.generateRequest();
+        } else {
+          console.log("missing information");
+        }
+      }
+    }
+
+    window.customElements.define(AskAQuestion.is, AskAQuestion);
+  </script>
+</dom-module>

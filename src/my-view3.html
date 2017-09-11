@@ -1,0 +1,177 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="questions-view.html">
+<link rel="import" href="my-questions.html">
+<link rel="import" href="ask-a-question.html">
+
+<dom-module id="my-view3">
+  <template>
+    <style include="shared-styles">
+       :host {
+        display: block;
+        --my-custom-color: blue;
+        --paper-tab-ink: var(--my-custom-color);
+
+        /* custom CSS property */
+        --paper-tabs-selection-bar-color: blue;
+      }
+
+      .main-container {
+        min-height: 550px;
+        height: 100%;
+        width: 100%;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header-content {
+        @apply --paper-font-headline;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        font-weight: bold;
+        height: 8%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      paper-tabs {
+        height: 8%;
+      }
+
+      iron-pages {
+        height: 84%;
+        width: 100%;
+      }
+
+      questions-view,
+      my-questions {
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+    <app-location route="{{route}}" url-space-regex="^[[rootPath]]"></app-location>
+    <app-route route="{{route}}" pattern="[[rootPath]]:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
+    
+
+    <div class="main-container">
+
+      <div class="header-content">
+        DigiGyan
+      </div>
+
+      <paper-tabs selected="{{selected}}">
+        <paper-tab>Questions</paper-tab>
+        <paper-tab>My Questions</paper-tab>
+        <paper-tab>Ask a Question</paper-tab>
+      </paper-tabs>
+
+      <iron-pages selected="{{selected}}">
+        <questions-view user$="[[username]]" id="questionView"></questions-view>
+        <my-questions user$="[[username]]" id="myQuestions"></my-questions>
+        <ask-a-question user$="[[username]]" id="askAQuestion"></ask-a-question>
+      </iron-pages>
+    </div>
+
+  </template>
+
+  <script>
+    class MyView3 extends Polymer.Element {
+      static get is() {
+        return 'my-view3';
+      }
+
+
+      ready() {
+        super.ready();
+        this.username = this.subroute.path.replace("/", "");
+        console.log("user: "+this.username);
+        var user = this.username;
+        this.$.questionView.addEventListener('questionSelected', function (e) {
+          console.log("my-view3 got event");
+          var data = e.detail.selectedQuestion;
+          this.question = data;
+          console.log("this.question", this.question);
+          window.location.href = "/question/" + user + "/" + this.question.questionID;
+          // hey();
+          // this.dispatchEvent(new CustomEvent('questionsssss', {detail: {selectedQuestion: data}}));
+        })
+      }
+
+      static get properties() {
+        return {
+          page: {
+            type: String,
+            reflectToAttribute: true,
+            observer: '_pageChanged',
+          },
+          routeData: Object,
+          subroute: String,
+          // This shouldn't be neccessary, but the Analyzer isn't picking up
+          // Polymer.Element#rootPath
+          rootPath: String,
+          username: String,
+          selected: {
+            type: Number,
+            value: 0,
+            observer: '_tabChanged',
+          },
+          question: {
+            type: Object,
+            value: "",
+            reflectToAttribute: true,
+            observer: '_questionChanged',
+          }
+        };
+      }
+
+      static get observers() {
+        return [
+          '_routePageChanged(routeData.page)',
+        ];
+      }
+
+      _routePageChanged(page) {
+        // If no page was found in the route data, page will be an empty string.
+        // Deault to 'view1' in that case.
+        this.page = page || 'view1';
+      }
+
+      _pageChanged(page) {
+        // Load page import on demand. Show 404 page if fails
+        var resolvedPageUrl = this.resolveUrl('my-' + page + '.html');
+        Polymer.importHref(
+          resolvedPageUrl,
+          null,
+          this._showPage404.bind(this),
+          true);
+      }
+
+      _showPage404() {
+        this.page = 'view404';
+      }
+
+      _tabChanged(newVal, oldVal) {
+        if (newVal == 0) {
+          this.$.questionView.requestQuestion();
+        }
+      }
+
+      _questionChanged(newValue, oldValue) {
+        console.log("questionchanged", newValue, oldValue);
+      }
+    }
+
+    window.customElements.define(MyView3.is, MyView3);
+  </script>
+</dom-module>

@@ -1,0 +1,342 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-styles/typography.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="my-question">
+  <template>
+    <style include="shared-styles">
+       :host {
+        display: block;
+      }
+
+      .back {
+        text-decoration: none;
+      }
+
+      .question-container {
+        min-height: 550px;
+        height: 100%;
+        width: 100%;
+        overflow: auto;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header-content {
+        font-family: 'Roboto', 'Noto', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        font-weight: bold;
+        min-height: 50px;
+        height: 8%;
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .header-content .title {
+        @apply --paper-font-headline;
+      }
+
+      .back,
+      .notifications {
+        width: 80px;
+      }
+
+      paper-card {
+        margin: 8px;
+        padding: 10px;
+        width: 95%;
+      }
+
+      .question-heading,
+      .answer-heading {
+        @apply --paper-font-headline;
+      }
+
+      .question-description,
+      .answer-description {
+        padding: 8px 0;
+      }
+
+      .question-footer,
+      .answers-footer {
+        padding: 8px 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+      }
+
+      .answers-box {
+        height: 55%;
+        overflow: auto;
+        margin-top: auto;
+      }
+
+      .answers-text {
+        padding-left: 8px;
+      }
+
+      .author {
+        color: #9a9a9a;
+        text-decoration: underline;
+      }
+
+      .your-answer-box {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      paper-input,
+      paper-textarea {
+        width: 50%;
+        min-width: 300px;
+        max-width: 400px;
+      }
+
+      paper-button {
+        width: 50%;
+        margin-top: 20px;
+        min-width: 300px;
+        max-width: 400px;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        font-weight: normal;
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      paper-button.indigo {
+        background-color: var(--paper-indigo-500);
+        color: white;
+        --paper-button-raised-keyboard-focus: {
+          background-color: var(--paper-pink-a200) !important;
+          color: white !important;
+        }
+        ;
+      }
+
+      paper-button.indigo:hover {
+        background-color: var(--paper-indigo-400);
+      }
+    </style>
+    <app-location route="{{route}}" url-space-regex="^[[rootPath]]"></app-location>
+    <app-route route="{{route}}" pattern="[[rootPath]]:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
+    <div class="question-container">
+      <div class="header-content">
+        <a class="back" href="/view3">
+          <iron-icon icon="chevron-left"></iron-icon>Back
+        </a>
+        <span class="title">DigiGyan</span>
+        <span class="notifications"></span>
+      </div>
+      <paper-card class="question">
+        <div class="question-heading">
+          [[question.question]]
+        </div>
+        <div class="question-description">
+          [[question.questionDescription]]
+        </div>
+        <div class="question-footer">
+          <span on-click="likeThisQuestion">
+            <iron-icon icon="thumb-up"></iron-icon>
+            [[question.likes]]
+          </span>
+          <span>
+            [[question.answersCount]]
+            <iron-icon icon="communication:chat-bubble"></iron-icon>
+          </span>
+        </div>
+      </paper-card>
+      <h3 class="answers-text">Answers</h3>
+      <div class="answers-box">
+        <template is="dom-repeat" items="{{answers}}">
+          <paper-card>
+            <div class="answers-description">
+              [[item.answer]]
+            </div>
+            <div class="answers-footer">
+              <span>
+                  <iron-icon icon="thumb-up"></iron-icon> Like
+              </span>
+              <span class="author">
+                [[item.username]]
+              </span>
+            </div>
+          </paper-card>
+        </template>
+        <div class="your-answer-box">
+          <h3>
+            Your Answer
+          </h3>
+
+          <paper-textarea id="yourAnswerInput" label="Please rovide your answer here" value="{{yourAnswer}}">
+            <!-- <iron-icon icon="lock" slot="prefix"></iron-icon> -->
+          </paper-textarea>
+          <paper-button raised class="indigo" on-click="submitAnswer">Submit</paper-button>
+        </div>
+      </div>
+    </div>
+
+    <iron-ajax id="requesrQuestionData" url="http://localhost:2000/getQuestionByID" handle-as="json" on-response="_getQuestionByID"
+      debounce-duration="300">
+    <iron-ajax id="submitAnswer" url="http://localhost:2000/submitAnswer" handle-as="json" on-response="_submitAnswerCallback"
+      debounce-duration="300">
+    <iron-ajax id="getAnswers" url="http://localhost:2000/getAnswers" handle-as="json" on-response="_getAnswersCallback"
+      debounce-duration="300">
+    <iron-ajax id="likeQuestion" url="http://localhost:2000/likeQuestion" handle-as="json" on-response="_likeQuestionCallback"
+      debounce-duration="300">
+      </iron-ajax>
+  </template>
+
+  <script>
+    class MyQuestion extends Polymer.Element {
+      static get is() {
+        return 'my-question';
+      }
+
+      ready() {
+        super.ready();
+        console.log(this.subroute.path.replace("/", ""));
+        var subRouteData = this.subroute.path;
+        var result;
+        result = subRouteData.split("/"); 
+        console.log(result);
+        this.username = result[1];
+        var questionID = result[2];
+        this.$.requesrQuestionData.params.questionID = questionID;
+        this.$.requesrQuestionData.generateRequest();
+      }
+
+      likeThisQuestion() {
+        var subRouteData = this.subroute.path;
+        var result;
+        result = subRouteData.split("/"); 
+        console.log(result);
+        var username = result[1];
+        var questionID = result[2];
+        this.$.likeQuestion.params.questionID = questionID;
+        this.$.likeQuestion.params.username = username;
+        this.$.likeQuestion.generateRequest();
+      }
+
+      _likeQUestionCallback() {
+
+      }
+
+      getAnswers() {
+        var subRouteData = this.subroute.path;
+        var result = subRouteData.split("/"); 
+        var questionID = result[2];
+        this.$.getAnswers.params.questionID = questionID;
+        this.$.getAnswers.generateRequest();
+      }
+
+      _getAnswersCallback(data) {
+        console.log(data.detail.response)
+        
+          this.answers = data.detail.response;
+        console.log(this.answers);
+      }
+
+      submitAnswer() {
+        console.log(this.yourAnswer);
+        if(this.yourAnswer) {
+          var subRouteData = this.subroute.path;
+          var result = subRouteData.split("/"); 
+          console.log(result);
+          this.username = result[1];
+          var questionID = result[2];
+          this.$.submitAnswer.params.questionID = questionID;
+          this.$.submitAnswer.params.username = this.username;
+          this.$.submitAnswer.params.answer = this.yourAnswer;
+          this.$.submitAnswer.generateRequest();
+        }
+      }
+
+      _submitAnswerCallback(data) {
+        console.log(data.detail.response);
+      }
+
+      _getQuestionByID(data) {
+        console.log("response", data.detail.response);
+        this.question = data.detail.response;
+        this.getAnswers();
+      }
+
+      static get observers() {
+        return [
+          '_routePageChanged(routeData.page)',
+        ];
+      }
+
+      _routePageChanged(page) {
+        // If no page was found in the route data, page will be an empty string.
+        // Deault to 'view1' in that case.
+        this.page = page || 'view1';
+      }
+
+      _pageChanged(page) {
+        // Load page import on demand. Show 404 page if fails
+        var resolvedPageUrl = this.resolveUrl('my-' + page + '.html');
+        Polymer.importHref(
+          resolvedPageUrl,
+          null,
+          this._showPage404.bind(this),
+          true);
+      }
+
+      _showPage404() {
+        this.page = 'view404';
+      }
+
+      static get properties() {
+        return {
+          page: {
+            type: String,
+            reflectToAttribute: true,
+            observer: '_pageChanged',
+          },
+          routeData: Object,
+          subroute: String,
+          // This shouldn't be neccessary, but the Analyzer isn't picking up
+          // Polymer.Element#rootPath
+          rootPath: String,
+          answers: {
+            type: Array,
+            value: []
+          },
+          question: {
+            type: Object,
+            value: {}
+          },
+          username: {
+            type: String,
+            reflectToAttribute: true,
+          },
+          yourAnswer: {
+            type: String
+          }
+        };
+      }
+    }
+
+    window.customElements.define(MyQuestion.is, MyQuestion);
+  </script>
+</dom-module>

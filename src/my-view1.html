@@ -1,0 +1,127 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="my-view1">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+      }
+
+      .login-container {
+        min-height: 550px;
+        height: 100%;
+        width: 100%;
+        padding-bottom: 100px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+      }
+      paper-input {
+        width: 50%;
+        min-width: 300px;
+        max-width: 400px;
+      }
+      iron-icon, div[suffix] {
+        color: hsl(0, 0%, 50%);
+        margin-right: 12px;
+      }
+      paper-button {
+        width: 50%;
+        margin-top: 20px;
+        min-width: 300px;
+        max-width: 400px;
+        font-family: 'Roboto', 'Noto', sans-serif;
+        font-weight: normal;
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+      }
+      paper-button.indigo {
+        background-color: var(--paper-indigo-500);
+        color: white;
+        --paper-button-raised-keyboard-focus: {
+          background-color: var(--paper-pink-a200) !important;
+          color: white !important;
+        };
+      }
+      paper-button.indigo:hover {
+        background-color: var(--paper-indigo-400);
+      }
+      a {
+        text-decoration: none;
+        color: #3f51b5;
+      }
+    </style>
+
+    <div class="login-container">
+      <paper-input label="username" value="{{username}}">
+        <iron-icon icon="social:person" slot="prefix"></iron-icon>
+      </paper-input>
+      <paper-input label="password" value="{{password}}">
+        <iron-icon icon="lock" slot="prefix"></iron-icon>
+      </paper-input>
+      <paper-button raised class="indigo" on-click="authenticate">Login</paper-button>
+      
+      <a href="/view2"><paper-button raised>Register</paper-button></a>
+    </div>
+    <iron-ajax id="login" url="http://localhost:2000/login" handle-as="json" on-response="_loginCallback" debounce-duration="300">
+    </iron-ajax>
+  </template>
+
+  <script>
+    class MyView1 extends Polymer.Element {
+      static get is() { return 'my-view1'; }  
+      
+      static get properties() {
+        return {
+          username: {
+            type: String
+          },
+          password: {
+            type: String
+          }
+        };
+      }
+
+      authenticate() {
+        var user = {
+          username: this.username,
+          password: this.password
+        }
+        this.$.login.params.user = JSON.stringify(user);
+        this.$.login.generateRequest();
+      }
+
+      _loginCallback(data) {
+        console.log(data.detail.response);
+        if(data.detail.response.msg == "user authenticated") {
+          this.dispatchEvent(
+            new CustomEvent('userAuthenticated', {detail: {username: this.username}})
+          );
+        }
+      }
+    }
+
+  
+
+    window.customElements.define(MyView1.is, MyView1);
+  </script>
+</dom-module>
